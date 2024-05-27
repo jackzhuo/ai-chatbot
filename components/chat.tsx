@@ -1,9 +1,12 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+
 import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
+import { ChatHeader } from './chat-panel-header'
 import { EmptyScreen } from '@/components/empty-screen'
+
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { useEffect, useState } from 'react'
 import { useUIState, useAIState } from 'ai/rsc'
@@ -13,17 +16,23 @@ import { Message } from '@/lib/chat/actions'
 import { useScrollAnchor } from '@/lib/hooks/use-scroll-anchor'
 import { toast } from 'sonner'
 
+import { Model } from '@/lib/types'
+
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
   id?: string
+  model: Model
   session?: Session
   missingKeys: string[]
 }
 
-export function Chat({ id, className, session, missingKeys }: ChatProps) {
+export function Chat({ id, model, className, session, missingKeys }: ChatProps) {
   const router = useRouter()
   const path = usePathname()
+  
   const [input, setInput] = useState('')
+  const [modelId, setModelId] = useState(model.id)
+
   const [messages] = useUIState()
   const [aiState] = useAIState()
 
@@ -32,7 +41,11 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
   useEffect(() => {
     if (session?.user) {
       if (!path.includes('chat') && messages.length === 1) {
-        window.history.replaceState({}, '', `/chat/${id}`)
+        if( 'chatbot' === model.type ) {
+          window.history.replaceState({}, '', `/bot/${model.id}/chat/${id}`)
+        } else {
+          window.history.replaceState({}, '', `/chat/${id}`)
+        }
       }
     }
   }, [id, path, session?.user, messages])
@@ -59,11 +72,13 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
 
   return (
     <div
-      className="group w-full overflow-auto pl-0 peer-[[data-state=open]]:lg:pl-[250px] peer-[[data-state=open]]:xl:pl-[300px]"
+      className="relative group w-full overflow-auto pl-0 peer-[[data-state=open]]:lg:pl-[250px] peer-[[data-state=open]]:xl:pl-[300px]"
       ref={scrollRef}
     >
+      <ChatHeader modelId={modelId} session={session} isShared={false} setModelId={ setModelId }/>
+
       <div
-        className={cn('pb-[200px] pt-4 md:pt-10', className)}
+        className={cn('pb-[200px] pt-4 md:pt-2', className)}
         ref={messagesRef}
       >
         {messages.length ? (
@@ -77,6 +92,9 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
         id={id}
         input={input}
         setInput={setInput}
+        modelId={modelId}
+        setModelId={setModelId}
+        examples={model.examples}
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
       />

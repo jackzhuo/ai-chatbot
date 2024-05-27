@@ -16,6 +16,8 @@ import { SidebarToggle } from './sidebar-toggle'
 import { ChatHistory } from './chat-history'
 import { Session } from '@/lib/types'
 
+import { ModelSelectDialog } from './model-select-dialog'
+
 async function UserOrLogin() {
   const session = (await auth()) as Session
   return (

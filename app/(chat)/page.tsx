@@ -5,8 +5,10 @@ import { auth } from '@/auth'
 import { Session } from '@/lib/types'
 import { getMissingKeys } from '@/app/actions'
 
+import { getDefaultModel } from '../models'
+
 export const metadata = {
-  title: 'Next.js AI Chatbot'
+  title: 'Chatbot ToolBox'
 }
 
 export default async function IndexPage() {
@@ -14,9 +16,11 @@ export default async function IndexPage() {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
+  const defaultModel = await getDefaultModel()
+
   return (
-    <AI initialAIState={{ chatId: id, messages: [] }}>
-      <Chat id={id} session={session} missingKeys={missingKeys} />
+    <AI initialAIState={{ chatId: id, model:defaultModel, messages: [] }}>
+      <Chat id={id} model={defaultModel} session={session} missingKeys={missingKeys} />
     </AI>
   )
 }

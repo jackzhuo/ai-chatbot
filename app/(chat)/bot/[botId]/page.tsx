@@ -6,11 +6,13 @@ import { getChat, getMissingKeys } from '@/app/actions'
 import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
-import { getDefaultModel, getModelById } from '@/app/models'
+
+import { getModelById } from '@/app/models'
+import { nanoid } from 'nanoid'
 
 export interface ChatPageProps {
   params: {
-    id: string
+    botId: string
   }
 }
 
@@ -23,9 +25,9 @@ export async function generateMetadata({
     return {}
   }
 
-  const chat = await getChat(params.id, session.user.id)
+  const model = await getModelById(params.botId)
   return {
-    title: chat?.title.toString().slice(0, 50) ?? 'Chat'
+    title: model?.title ?? 'Chat'
   }
 }
 
@@ -34,30 +36,23 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const missingKeys = await getMissingKeys()
 
   if (!session?.user) {
-    redirect(`/login?next=/chat/${params.id}`)
+    redirect(`/login?next=/bot/${params.botId}`)
   }
 
-  const userId = session.user.id as string
-  const chat = await getChat(params.id, userId)
+  const id = nanoid()
 
-  const defaultModel = await getDefaultModel()
-  const currModel = await getModelById(chat?.modelId) ?? defaultModel
-
-  if (!chat) {
-    redirect('/')
-  }
-
-  if (chat?.userId !== session?.user?.id) {
-    notFound()
+  const model = await getModelById(params.botId)
+  if( !model ) {
+    notFound();
   }
 
   return (
-    <AI initialAIState={{ chatId: chat.id, model: currModel, messages: chat.messages }}>
+    <AI initialAIState={{ chatId: id, model: model, messages: [] }}>
       <Chat
-        id={chat.id}
-        model={currModel}
+        id={id}
+        model={model}
         session={session}
-        initialMessages={chat.messages}
+        initialMessages={[]}
         missingKeys={missingKeys}
       />
     </AI>

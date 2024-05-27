@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
 
-import { useActions, useUIState } from 'ai/rsc'
+import { useActions, useUIState, useAIState } from 'ai/rsc'
 
 import { UserMessage } from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
@@ -17,19 +17,30 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
+import { Model } from '@/lib/types'
 
 export function PromptForm({
   input,
-  setInput
+  setInput,
+  modelId,
+  setModelId
 }: {
   input: string
   setInput: (value: string) => void
+  modelId: string
+  setModelId: (value: string) => void
 }) {
   const router = useRouter()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
+
   const [_, setMessages] = useUIState<typeof AI>()
+  const [ aiState ] = useAIState()
+
+  const model : Model = aiState.model
+
+  console.log(formRef)
 
   React.useEffect(() => {
     if (inputRef.current) {
@@ -74,7 +85,7 @@ export function PromptForm({
               size="icon"
               className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
               onClick={() => {
-                router.push('/new')
+                router.push( model.type === 'chatbot' ? `/bot/${model.id}` : '/new')
               }}
             >
               <IconPlus />
@@ -98,6 +109,7 @@ export function PromptForm({
           value={input}
           onChange={e => setInput(e.target.value)}
         />
+        <input type="hidden" name="modelId" value={modelId} />
         <div className="absolute right-0 top-[13px] sm:right-4">
           <Tooltip>
             <TooltipTrigger asChild>
